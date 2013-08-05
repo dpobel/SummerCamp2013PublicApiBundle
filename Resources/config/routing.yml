@@ -1,3 +1,7 @@
 ez_systems_summer_camp2013_public_api_homepage:
     pattern:  /hello/{name}
     defaults: { _controller: EzSystemsSummerCamp2013PublicApiBundle:Default:index }
+
+ez_systems_summer_camp2013_public_api_rss_blog_posts:
+    pattern:  /summercamp/rssblogposts
+    defaults: { _controller: summercamp.export.controller:rssBlogPost }

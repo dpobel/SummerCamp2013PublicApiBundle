@@ -1,7 +1,8 @@
 parameters:
-#    ez_systems_summer_camp2013_public_api.example.class: EzSystems\SummerCamp2013PublicApiBundle\Example
+    summercamp.export.controller.class: EzSystems\SummerCamp2013PublicApiBundle\Controller\ExportController
 
 services:
-#    ez_systems_summer_camp2013_public_api.example:
-#        class: %ez_systems_summer_camp2013_public_api.example.class%
-#        arguments: [@service_id, "plain_value", %parameter%]
+    summercamp.export.controller:
+        class: %summercamp.export.controller.class%
+        calls:
+            - [ setContainer, [@service_container] ]
