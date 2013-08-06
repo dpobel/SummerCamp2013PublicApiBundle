@@ -13,18 +13,29 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class ExportControllerTest extends WebTestCase
 {
-    public function testRssBlogPost()
-    {
-        $client = static::createClient();
+    protected $client;
 
-        $crawler = $client->request('GET', '/summercamp/rssblogposts');
-        $response = $client->getResponse();
+    public function setUp()
+    {
+        $this->client = static::createClient();
+    }
+
+    public function testRssBlogPostContentType()
+    {
+        $crawler = $this->client->request('GET', '/summercamp/rssblogposts');
+        $response = $this->client->getResponse();
 
         $this->assertEquals(
             $response->headers->get( 'content-type' ),
             "application/rss+xml",
             "The content type of the response should be application/rss+xml"
         );
+    }
+
+    public function testRssBlogPostItemCount()
+    {
+        $crawler = $this->client->request('GET', '/summercamp/rssblogposts');
+        $response = $this->client->getResponse();
 
         $items = $crawler->filterXpath( '//item' );
         $this->assertTrue(
@@ -35,6 +46,15 @@ class ExportControllerTest extends WebTestCase
             $items->count() <= 10,
             'The RSS feed should return less than 10 elements'
         );
+
+    }
+
+    public function testRssBlogPostItemsContent()
+    {
+        $crawler = $this->client->request('GET', '/summercamp/rssblogposts');
+        $response = $this->client->getResponse();
+
+        $items = $crawler->filterXpath( '//item' );
         foreach ( $items as $item )
         {
             foreach ( $item->childNodes as $child )
@@ -48,7 +68,5 @@ class ExportControllerTest extends WebTestCase
                 }
             }
         }
-
-
     }
 }
