@@ -37,6 +37,11 @@ class ExportControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/summercamp/rssblogposts');
         $response = $this->client->getResponse();
 
+        $repository = static::$kernel->getContainer()->get( 'ezpublish.api.repository' );
+        // FIXME
+        // get the total number of blog_post
+        // and adapt the test to check for the exact number of blog_post or 10
+
         $items = $crawler->filterXpath( '//item' );
         $this->assertTrue(
             $items->count() > 0,
