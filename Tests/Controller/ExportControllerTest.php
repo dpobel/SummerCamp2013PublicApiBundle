@@ -67,8 +67,8 @@ class ExportControllerTest extends WebTestCase
                 if ( $child->nodeType === XML_ELEMENT_NODE )
                 {
                     $this->assertTrue(
-                        stripos( 'FIXME', $child->nodeValue ) !== false,
-                        $child->nodeName . ' not fixed'
+                        stripos( 'FIXME', $child->nodeValue ) === false,
+                        $child->nodeName . ' not fixed (' . $child->nodeValue . ')'
                     );
                 }
             }
