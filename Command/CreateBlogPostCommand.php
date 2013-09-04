@@ -37,16 +37,36 @@ class CreateBlogPostCommand extends ContainerAwareCommand
         $output->writeLn(
             "Creating a blog post with " . var_export( $blogPostData, true )
         );
-        $output->writeLn( "FIXME ... :p" );
-        // FIXME
-        // create the blog_post content
-        // Steps:
+
+        $contentService = $repository->getContentService();
+        $locationService = $repository->getLocationService();
+        $contentTypeService = $repository->getContentTypeService();
+
         // * make to sure to be "identified" as a user that is allowed to create 
         //   content, admin is a good choice here ;-) Hardcoding the user id of
         //   the admin (14) is OK
+        $admin = $repository->getUserService()->loadUser( 14 );
+        $repository->setCurrentUser( $admin );
+
         // * get the Blog post content type
+        $blogPostType = $contentTypeService->loadContentTypeByIdentifier( 'blog_post' );
+
         // * create a "Blog post" content under the location which id is 90
+        $locationStruct = $locationService->newLocationCreateStruct( 90 );
+        $contentStruct = $contentService->newContentCreateStruct(
+            $blogPostType, 'eng-GB'
+        );
+
+        $contentStruct->remoteId = md5( uniqid() );
+        foreach ( $blogPostData as $key => $val )
+        {
+            $contentStruct->setField( $key, $val );
+        }
+        $draft = $contentService->createContent(
+            $contentStruct, array( $locationStruct )
+        );
         // * publish this content
+        $contentService->publishVersion( $draft->versionInfo );
     }
 
 }
