@@ -12,6 +12,9 @@ namespace EzSystems\SummerCamp2013PublicApiBundle\Controller;
 use Symfony\Component\HttpFoundation\Response;
 use eZ\Bundle\EzPublishCoreBundle\Controller;
 use ezcFeed;
+use eZ\Publish\API\Repository\Values\Content\Query;
+use eZ\Publish\API\Repository\Values\Content\Query\Criterion;
+use eZ\Publish\API\Repository\Values\Content\Query\SortClause;
 
 class ExportController extends Controller
 {
@@ -19,11 +22,27 @@ class ExportController extends Controller
     {
         $repository = $this->getRepository();
 
-        // FIXME
-        // put in $contents array the 10 last blog posts
-        // ordered by publication date (field publication_date) DESC
         $contents = array();
 
+        $searchService = $repository->getSearchService();
+        $query = new Query();
+        $query->limit = 10;
+        $query->offset = 0;
+
+        $query->criterion = new Criterion\LogicalAnd(
+            array(
+                new Criterion\Visibility( Criterion\Visibility::VISIBLE ),
+                new Criterion\Subtree( '/1/2' ),
+                new Criterion\ContentTypeIdentifier( array( 'blog_post' ) )
+            )
+        );
+        $query->sortClauses = array( new SortClause\Field( 'blog_post', 'publication_date', Query::SORT_DESC ) );
+
+        $results = $searchService->findContent( $query );
+        foreach ( $results->searchHits as $hit )
+        {
+            $contents[] = $hit->valueObject;
+        }
         return $this->feedResponse( 'Blog RSS feed', $contents );
     }
 
@@ -39,6 +58,9 @@ class ExportController extends Controller
     protected function feedResponse( $title, array $contents )
     {
         $request = $this->getRequest();
+        $locationService = $this->getRepository()->getLocationService();
+        $urlAliasService = $this->getRepository()->getURLAliasService();
+        $userService = $this->getRepository()->getUserService();
 
         $feed = new ezcFeed();
         $feed->title = $title;
@@ -53,23 +75,28 @@ class ExportController extends Controller
             /** @var $content eZ\Publish\API\Repository\Values\Content\Content */
             $item = $feed->add( 'item' );
 
-            $item->title = htmlspecialchars( 'FIXME NAME OF THE CONTENT', ENT_NOQUOTES, 'UTF-8' );
+            $item->title = htmlspecialchars( $content->contentInfo->name, ENT_NOQUOTES, 'UTF-8' );
 
             $guid = $feed->add( 'id' );
             $guid->isPermaLink = false;
-            $guid->id = 'FIXME REMOTE ID OF THE CONTENT';
+            $guid->id = $content->contentInfo->remoteId;
 
-            $item->link = 'FIXME full link to the post';
+            $location = $locationService->loadLocation( $content->contentInfo->mainLocationId );
+            $aliases = $urlAliasService->listLocationAliases(
+                $location, false
+            );
+            $item->link = $request->getUriForPath( $aliases[0]->path );
 
-            $item->pubDate = 1234; // FIXME publication date (timestamp in publication_date field)
-            $item->published = 1234; // FIXME same as above
+            $item->pubDate = $content->getFieldValue( 'publication_date' )->value->format( 'U' );
+            $item->published = $content->getFieldValue( 'publication_date' )->value->format( 'U' );
 
-            $item->description = 'FIXME BLOG POST CONTENT'; // strip_tags( ezxml ) is ok for now
+            $item->description = strip_tags( $content->getFieldValue( 'body' )->xml->saveXML() );
 
             $dublincore = $item->addModule( 'DublinCore' );
             $creator = $dublincore->add( 'creator' );
 
-            $creator->name = 'FIXME NAME OF THE OWNER';
+            $owner = $userService->loadUser( $content->contentInfo->ownerId );
+            $creator->name = $owner->login;
         }
 
 
